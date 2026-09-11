@@ -1,0 +1,7 @@
+=== NETWORK TRIAGE REPORT ===
+
+Top talker (most bytes sent): 10.2.0.5 (20700 bytes)
+
+Failed connection attempts per IP:
+  10.2.0.7: 3 failed
+  10.2.0.8: 1 failed

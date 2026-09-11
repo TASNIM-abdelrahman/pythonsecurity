@@ -1,0 +1,113 @@
+# Network Triage Tool
+
+A command-line security tool that analyzes network connection logs to flag
+suspicious activity. It identifies the top data-sending host ("top talker")
+and counts failed connection attempts per source IP — two early indicators
+worth triaging in a network investigation.
+
+Built as a functional data-analysis pipeline: **load → clean → analyze →
+report → visualize**, all runnable with a single command.
+
+## Features
+
+- **Automated pipeline** — one command runs the full load-to-report flow
+- **Data cleaning** — invalid rows are coerced and dropped, with a printed
+  count of how many were removed (no data loss goes unnoticed)
+- **Top talker detection** — finds the source IP sending the most bytes
+- **Failed-connection analysis** — counts failed attempts per source IP
+- **Text report** — findings saved to `data/triage_report.txt`
+- **Visual chart** — bar chart of bytes-per-IP saved to `data/top_talkers.png`
+- **Error handling** — a missing input file is caught and reported cleanly
+  instead of crashing
+
+## Project Structure
+
+capstone_project/
+├── data/ # Input CSV and generated report + chart
+│ └── connections.csv
+├── src/
+│ ├── init.py
+│ ├── main.py # Entry point — runs the pipeline
+│ ├── logic.py # Core data processing functions
+│ └── utils.py # Helper functions
+├── requirements.txt
+├── .gitignore
+└── README.md
+
+
+## Setup
+
+Install dependencies:
+
+pip install -r requirements.txt
+
+
+## Usage
+
+From the project root folder, run:
+
+python src/main.py
+
+
+This will:
+1. Load and clean `data/connections.csv`
+2. Analyze it for the top talker and failed connections
+3. Write `data/triage_report.txt`
+4. Save `data/top_talkers.png`
+5. Print a summary to the screen
+
+## Example Output
+
+Report written to data/triage_report.txt
+Chart saved to data/top_talkers.png
+{'top_talker': '10.2.0.5', 'top_bytes': 20700,
+'failed_counts': 10.2.0.7: 3, 10.2.0.8: 1}
+
+
+![Top Talkers by Bytes](data/top_talkers.png)
+
+## Input Format
+
+The tool expects a CSV at `data/connections.csv` with these columns:
+
+`timestamp, src_ip, dst_port, protocol, bytes, status`
+
+## Design Decisions
+
+**Reporting dropped rows instead of deleting them silently.**
+When the tool removes rows with missing or invalid `bytes` values, it prints
+how many were dropped rather than removing them quietly. In a security
+context, malformed data can itself be a signal — a sign of tampering, a
+corrupted log, or injected garbage. Silently discarding those rows could mean
+deleting the very evidence the tool exists to surface, so the tool flags the
+loss rather than hiding it.
+
+**Functional design rather than OOP.**
+The tool is a linear pipeline — data flows in one direction, load → clean →
+analyze → report → chart. Functions that take data in and return data out fit
+that shape cleanly. Object-oriented classes would add structure the problem
+doesn't call for, so a functional approach keeps the code simpler and easier
+to follow.
+
+## Known Limitations & Future Work
+
+- **Quarantine malformed rows.** Invalid rows are currently dropped (with a
+  printed count). A production forensic tool would instead write those rows to
+  a separate quarantine file for inspection, since malformed data can indicate
+  tampering and shouldn't be discarded outright. This is the most valuable
+  next improvement.
+- **Configurable input path.** The input file path is currently fixed;
+  accepting it as a command-line argument would make the tool reusable across
+  different datasets.
+- **Additional detections.** Port-scan patterns and unusual-protocol flags
+  would extend the triage beyond top talkers and failed connections.
+
+## Technologies
+
+- Python 3
+- pandas — data loading and analysis
+- matplotlib — chart generation
+
+## Author
+
+Tasnim
