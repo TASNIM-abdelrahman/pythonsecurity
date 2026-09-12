@@ -28,3 +28,24 @@ def test_analyze_finds_top_talker():
     results = analyze(df)
     assert results["top_talker"] == "10.0.0.1"
     assert results["top_bytes"] == 1000
+
+def test_analyze_flags_repeated_failures():
+    """An IP with repeated failures and a high failure rate should be flagged."""
+    df = pd.DataFrame({
+        "src_ip": [
+            "10.0.0.7",
+            "10.0.0.7",
+            "10.0.0.7",
+            "10.0.0.8"
+        ],
+        "dst_port": [8080, 8080, 8080, 22],
+        "bytes": [100, 100, 100, 50],
+        "status": ["failed", "failed", "failed", "failed"],
+    })
+
+    results = analyze(df)
+
+    assert len(results["suspicious_ips"]) == 1
+    assert results["suspicious_ips"][0]["ip"] == "10.0.0.7"
+    assert results["suspicious_ips"][0]["failed_attempts"] == 3
+    assert results["suspicious_ips"][0]["failure_rate"] == 1.0
